@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday!</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for a lovely typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            /* Love theme background placeholder */
+            background-image: url('https://images.unsplash.com/photo-1518199268815-95a206069e55?auto=format&fit=crop&q=80&w=1920');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            overflow: hidden; /* Prevent body scroll, handle scrolling inside sections */
+        }
+        
+        /* Dark overlay to make text readable */
+        .bg-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            z-index: -1;
+        }
+
+        h1, h2, .fancy-font {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        /* Page transition styles */
+        .page-section {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease-in-out;
+            padding: 1.5rem;
+        }
+
+        .page-section.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Cute Polaroid Frame Style */
+        .polaroid {
+            background: #fff;
+            padding: 10px 10px 30px 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+            color: #333;
+            text-align: center;
+        }
+        .polaroid:nth-child(odd) { transform: rotate(-3deg); }
+        .polaroid:nth-child(even) { transform: rotate(3deg); }
+        .polaroid img {
+            border-radius: 4px;
+            width: 100%;
+            height: auto;
+        }
+
+        /* Music Spectrum Animation */
+        .spectrum-bar {
+            width: 4px;
+            background-color: #ff477e;
+            border-radius: 4px;
+            animation: spectrum 1s infinite ease-in-out;
+            transform-origin: bottom;
+        }
+        .spectrum-container.paused .spectrum-bar {
+            animation-play-state: paused;
+            transform: scaleY(0.2);
+        }
+        @keyframes spectrum {
+            0%, 100% { transform: scaleY(0.2); }
+            50% { transform: scaleY(1); }
+        }
+        .bar-1 { animation-delay: 0.0s; height: 16px; }
+        .bar-2 { animation-delay: 0.2s; height: 24px; }
+        .bar-3 { animation-delay: 0.4s; height: 18px; }
+        .bar-4 { animation-delay: 0.6s; height: 26px; }
+        .bar-5 { animation-delay: 0.8s; height: 20px; }
+
+        canvas#fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="text-center">
+
+    <div class="bg-overlay"></div>
+    <canvas id="fireworks" class="hidden"></canvas>
+
+    <!-- Background Music -->
+    <!-- Replace this src with your favorite romantic or birthday song URL -->
+    <audio id="bg-music" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
+
+    <!-- Persistent Music Player (Top Right) -->
+    <div id="persistent-player" class="fixed top-6 right-6 z-50 hidden bg-white/20 p-2 rounded-xl backdrop-blur-md cursor-pointer border border-pink-300/30 shadow-lg hover:bg-white/30 transition" onclick="toggleMusic()">
+        <div class="flex items-end gap-1 h-6 spectrum-container" id="spectrum">
+            <div class="spectrum-bar bar-1"></div>
+            <div class="spectrum-bar bar-2"></div>
+            <div class="spectrum-bar bar-3"></div>
+            <div class="spectrum-bar bar-4"></div>
+            <div class="spectrum-bar bar-5"></div>
+        </div>
+        <p class="text-[10px] mt-1 text-white font-semibold tracking-wider">MUSIC</p>
+    </div>
+
+    <!-- PAGE 1: The Lock Screen -->
+    <section id="page1" class="page-section active">
+        <div class="bg-black/40 p-8 rounded-3xl border border-pink-500/30 backdrop-blur-sm max-w-sm w-full shadow-2xl shadow-pink-500/20">
+            <div class="text-5xl mb-4">🔒</div>
+            <h2 class="text-3xl font-bold mb-2 text-pink-300">Surprise Locked</h2>
+            <p class="text-sm text-gray-300 mb-6">Unlocks on<br><strong>08-April-2026 at 9:00 AM</strong></p>
+            
+            <div id="countdown" class="text-xl font-mono text-pink-400 mb-6 font-bold tracking-widest">
+                Loading time...
+            </div>
+            
+            <button id="unlock-btn" disabled class="w-full py-3 rounded-full bg-gray-600 text-gray-400 cursor-not-allowed font-semibold transition-all duration-300">
+                Waiting...
+            </button>
+        </div>
+    </section>
+
+    <!-- PAGE 2: Birthday Wishes & Fireworks -->
+    <section id="page2" class="page-section">
+        <div class="max-w-2xl mx-auto z-20">
+            <h1 class="text-6xl md:text-8xl text-pink-400 drop-shadow-[0_0_15px_rgba(236,72,153,0.8)] mb-6">Happy Birthday!</h1>
+            <p class="text-xl md:text-2xl mb-10 text-pink-100 italic">May all your wishes come true today and always. ✨</p>
+            
+            <button id="play-btn" onclick="startCelebration()" class="mb-6 px-8 py-4 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full text-xl font-bold shadow-[0_0_20px_rgba(236,72,153,0.5)] hover:scale-105 transition-transform flex items-center justify-center gap-3 mx-auto">
+                ▶ Play Music & Celebrate
+            </button>
+
+            <button onclick="nextPage(3)" class="mt-4 px-6 py-2 bg-white/20 border border-white/50 hover:bg-white/30 rounded-full backdrop-blur-sm transition-all mx-auto block">
+                Continue 🤍
+            </button>
+        </div>
+    </section>
+
+    <!-- PAGE 3: Memories Paragraph -->
+    <section id="page3" class="page-section">
+        <div class="max-w-md w-full bg-black/50 p-8 rounded-2xl border border-rose-400/30 backdrop-blur-md overflow-y-auto max-h-[85vh] hide-scrollbar">
+            <h2 class="text-4xl text-rose-300 mb-6">Our Beautiful Memories</h2>
+            <p class="text-gray-200 leading-relaxed text-left mb-6 text-lg">
+                To my favorite person in the entire world... Words cannot describe how much you mean to me. 
+                Every moment spent with you is a treasure, and today, I just want to celebrate the amazing 
+                person you are. You bring so much light, love, and laughter into my life. Here is to 
+                all the incredible memories we've made and the countless more we have yet to create. 
+                You deserve the absolute best today and forever!
+            </p>
+            
+            <!-- Gemini LLM Feature 1 -->
+            <div class="bg-white/10 p-5 rounded-xl mb-6 border border-pink-300/30">
+                <p class="text-sm text-pink-200 mb-3 italic">Let's make a new memory... enter a topic below (e.g., 'our first date', 'rainy days') and I'll write you a magic poem!</p>
+                <input type="text" id="memory-prompt" placeholder="Enter a memory topic..." class="w-full px-4 py-2 rounded-lg bg-black/40 border border-pink-400/50 text-white placeholder-gray-400 focus:outline-none focus:border-pink-400 mb-3">
+                <button onclick="generatePoem()" class="w-full py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-bold shadow-md transition-colors text-white">
+                    Generate Magic Poem ✨
+                </button>
+                <div id="poem-output" class="mt-4 text-[15px] leading-relaxed text-pink-100 italic whitespace-pre-line hidden border-t border-pink-300/30 pt-3"></div>
+            </div>
+
+            <button onclick="nextPage(4)" class="w-full py-3 bg-rose-500 hover:bg-rose-600 rounded-full font-bold shadow-lg transition-colors text-white">
+                See Our Pictures ❤️
+            </button>
+        </div>
+    </section>
+
+    <!-- PAGE 4: Scrollable Images -->
+    <section id="page4" class="page-section">
+        <h2 class="text-4xl text-pink-300 mb-4 drop-shadow-md">Picture Perfect 📸</h2>
+        
+        <!-- Scrollable Container -->
+        <div class="flex-1 w-full max-w-md overflow-y-auto pb-8 hide-scrollbar" style="max-height: 65vh;">
+            <!-- Image 1 -->
+            <div class="polaroid">
+                <!-- Replace src with your image -->
+                <img src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=400&q=80" alt="Memory 1">
+                <p class="mt-3 font-semibold text-pink-600 fancy-font text-xl">The day we met...</p>
+            </div>
+            <!-- Image 2 -->
+            <div class="polaroid">
+                <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=400&q=80" alt="Memory 2">
+                <p class="mt-3 font-semibold text-pink-600 fancy-font text-xl">Endless smiles with you.</p>
+            </div>
+            <!-- Image 3 -->
+            <div class="polaroid">
+                <img src="https://images.unsplash.com/photo-1474552226712-ac0f0961a954?auto=format&fit=crop&w=400&q=80" alt="Memory 3">
+                <p class="mt-3 font-semibold text-pink-600 fancy-font text-xl">My happy place 💖</p>
+            </div>
+        </div>
+
+        <button onclick="nextPage(5)" class="mt-6 px-8 py-3 bg-white text-rose-600 hover:bg-rose-100 rounded-full font-bold shadow-[0_0_15px_rgba(255,255,255,0.4)] transition-colors">
+            Watch Videos 🎥
+        </button>
+    </section>
+
+    <!-- PAGE 5: Scrollable Videos -->
+    <section id="page5" class="page-section">
+        <h2 class="text-4xl text-pink-300 mb-4 drop-shadow-md">Unforgettable Moments 🎬</h2>
+        
+        <!-- Scrollable Video Container -->
+        <div class="flex-1 w-full max-w-md overflow-y-auto pb-8 hide-scrollbar space-y-6" style="max-height: 65vh;">
+            
+            <!-- Video 1 -->
+            <div class="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20">
+                <!-- Replace src with your video link -->
+                <video controls class="w-full rounded-lg outline-none">
+                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                    Your browser does not support HTML video.
+                </video>
+                <p class="mt-2 text-sm text-pink-200">Crazy times! 😂</p>
+            </div>
+
+            <!-- Video 2 -->
+            <div class="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/20">
+                <!-- Replace src with your video link -->
+                <video controls class="w-full rounded-lg outline-none">
+                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                    Your browser does not support HTML video.
+                </video>
+                <p class="mt-2 text-sm text-pink-200">Our little adventure 🌍</p>
+            </div>
+
+        </div>
+
+        <button onclick="nextPage(6)" class="mt-6 px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-500 hover:scale-105 rounded-full font-bold shadow-lg transition-transform">
+            One Last Thing... 💌
+        </button>
+    </section>
+
+    <!-- PAGE 6: Final Message -->
+    <section id="page6" class="page-section">
+        <div class="max-w-md w-full bg-black/60 p-10 rounded-3xl border-2 border-pink-500/50 backdrop-blur-lg overflow-y-auto max-h-[90vh] hide-scrollbar">
+            <div class="text-6xl mb-6 animate-pulse">❤️</div>
+            <h2 class="text-5xl text-pink-400 mb-6">I Love You!</h2>
+            <p class="text-xl text-gray-200 leading-relaxed mb-6">
+                Thank you for being you. Here's to wishing you the happiest of birthdays and a lifetime of joy together. 
+                I will always be by your side.
+            </p>
+
+            <!-- Gemini LLM Feature 2 -->
+            <div class="bg-pink-900/40 p-5 rounded-xl mb-6 border border-pink-400/40">
+                <p class="text-sm text-pink-200 mb-3">Want to know what this year holds for us?</p>
+                <button onclick="generateFortune()" class="w-full py-2 bg-gradient-to-r from-rose-400 to-pink-500 hover:scale-105 rounded-full font-bold shadow-[0_0_15px_rgba(236,72,153,0.4)] transition-transform text-white">
+                    Reveal Our Future ✨
+                </button>
+                <div id="fortune-output" class="mt-4 text-[15px] leading-relaxed text-white italic hidden border-t border-pink-400/40 pt-3"></div>
+            </div>
+
+            <p class="fancy-font text-3xl text-rose-300">- Yours Forever -</p>
+        </div>
+    </section>
+
+    <script>
+        // --- 1. COUNTDOWN & LOCK LOGIC ---
+        // Set the exact target date and time requested
+        const targetDate = new Date('2026-04-08T09:00:00').getTime();
+        const countdownEl = document.getElementById('countdown');
+        const unlockBtn = document.getElementById('unlock-btn');
+        let timerInterval;
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance <= 0) {
+                // Time has reached or passed!
+                clearInterval(timerInterval);
+                countdownEl.innerHTML = "Time to Celebrate! 🎉";
+                unlockBtn.innerHTML = "Unlock Surprise 🔓";
+                unlockBtn.disabled = false;
+                unlockBtn.className = "w-full py-3 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white cursor-pointer font-bold shadow-[0_0_15px_rgba(236,72,153,0.6)] hover:scale-105 transition-transform duration-300";
+                unlockBtn.onclick = () => nextPage(2);
+                return;
+            }
+
+            // Calculations for days, hours, minutes and seconds
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdownEl.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        // Run immediately, then every second
+        updateCountdown();
+        timerInterval = setInterval(updateCountdown, 1000);
+
+
+        // --- 2. PAGE NAVIGATION ---
+        function nextPage(pageNum) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.remove('active');
+            });
+            // Show targeted page
+            document.getElementById(`page${pageNum}`).classList.add('active');
+
+            // Specific page triggers
+            if (pageNum === 2) {
+                // Trigger fireworks when entering page 2
+                startFireworks();
+            }
+            if (pageNum >= 3) {
+                // Show persistent player from page 3 onwards
+                document.getElementById('persistent-player').classList.remove('hidden');
+            }
+        }
+
+
+        // --- 3. AUDIO PLAYER LOGIC ---
+        const audio = document.getElementById('bg-music');
+        const spectrum = document.getElementById('spectrum');
+        let isPlaying = false;
+
+        function startCelebration() {
+            audio.play().then(() => {
+                isPlaying = true;
+                spectrum.classList.remove('paused');
+                // Change play button appearance purely for feedback
+                const btn = document.getElementById('play-btn');
+                btn.innerHTML = "🎶 Music Playing!";
+                btn.classList.replace('from-pink-500', 'from-green-400');
+                btn.classList.replace('to-rose-500', 'to-emerald-500');
+            }).catch(err => console.log("Audio play prevented by browser:", err));
+        }
+
+        function toggleMusic() {
+            if (isPlaying) {
+                audio.pause();
+                spectrum.classList.add('paused');
+            } else {
+                audio.play();
+                spectrum.classList.remove('paused');
+            }
+            isPlaying = !isPlaying;
+        }
+
+
+        // --- 4. FIREWORKS ANIMATION LOGIC (Canvas) ---
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let fireworkAnimId;
+        let isFireworksActive = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor(x, y, color, isRocket = false, vx = 0, vy = 0) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.isRocket = isRocket;
+                
+                if (this.isRocket) {
+                    this.vx = vx;
+                    this.vy = vy;
+                    this.size = 3;
+                    this.life = 1;
+                    this.alpha = 1;
+                } else {
+                    // Explosion particle
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 4 + 1;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.size = Math.random() * 2 + 1;
+                    this.life = Math.random() * 0.02 + 0.01;
+                    this.alpha = 1;
+                }
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (!this.isRocket) {
+                    this.vy += 0.05; // gravity for explosion
+                    this.alpha -= this.life;
+                } else {
+                    // Rocket slows down slightly at the top
+                    this.vy += 0.02;
+                    
+                    // Burst when it reaches roughly upper 1/3rd of the screen or starts falling
+                    if (this.vy >= 0 || this.y < canvas.height * 0.3) {
+                        this.alpha = 0; // Destroy rocket
+                        createExplosion(this.x, this.y, this.color);
+                    }
+                }
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle(x, y, color, false));
+            }
+        }
+
+        function startFireworks() {
+            canvas.classList.remove('hidden');
+            resizeCanvas();
+            isFireworksActive = true;
+            
+            const colors = ['#ff477e', '#ff0054', '#ffbd00', '#00b4d8', '#ffffff', '#9d4edd'];
+
+            // Generator interval for 5 seconds
+            const generateInterval = setInterval(() => {
+                // Shoot from bottom left and bottom right alternating
+                const fromLeft = Math.random() > 0.5;
+                const startX = fromLeft ? canvas.width * 0.1 : canvas.width * 0.9;
+                const startY = canvas.height;
+                
+                // Trajectory towards the center-top
+                const targetX = canvas.width * 0.3 + Math.random() * (canvas.width * 0.4);
+                
+                // Simple physics math for velocity to reach target area
+                const vx = (targetX - startX) / 60;
+                const vy = -(Math.random() * 5 + 8); // Upward force
+                
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particles.push(new Particle(startX, startY, color, true, vx, vy));
+
+            }, 400); // Shoot every 400ms
+
+            // Stop generating after 5 seconds
+            setTimeout(() => {
+                clearInterval(generateInterval);
+                isFireworksActive = false;
+                // Let remaining particles finish then hide canvas
+                setTimeout(() => {
+                    canvas.classList.add('hidden');
+                }, 3000); 
+            }, 5000);
+
+            animateFireworks();
+        }
+
+        function animateFireworks() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Trail effect
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            if (isFireworksActive || particles.length > 0) {
+                fireworkAnimId = requestAnimationFrame(animateFireworks);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // --- 5. GEMINI API LLM INTEGRATION ---
+        const apiKey = ""; // Automatically provided by the execution environment
+
+        // Exponential backoff retry logic for API calls
+        async function fetchWithRetry(url, options, retries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    await new Promise(res => setTimeout(res, delays[i]));
+                }
+            }
+        }
+
+        async function generatePoem() {
+            const promptInput = document.getElementById('memory-prompt').value;
+            const outputDiv = document.getElementById('poem-output');
+            
+            if (!promptInput.trim()) {
+                outputDiv.textContent = "Please enter a topic first!";
+                outputDiv.classList.remove('hidden');
+                return;
+            }
+
+            outputDiv.textContent = "Weaving magic words for you...";
+            outputDiv.classList.remove('hidden');
+
+            const systemPrompt = "You are a romantic, affectionate partner writing a sweet, 4-line rhyming birthday love poem based on the user's topic. Use exactly one or two emojis. Keep it personal and loving.";
+            const userQuery = `Write a short birthday love poem about: ${promptInput}`;
+
+            try {
+                const result = await fetchWithRetry(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: userQuery }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] }
+                        })
+                    }
+                );
+
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't find the words right now, but my love for you is endless.";
+                
+                // Format text to look nice by replacing newlines with line breaks
+                outputDiv.innerHTML = text.replace(/\n/g, '<br>');
+            } catch (error) {
+                outputDiv.innerHTML = "Oops, the magic spell failed temporarily.<br>But I still love you!";
+            }
+        }
+
+        async function generateFortune() {
+            const outputDiv = document.getElementById('fortune-output');
+            
+            outputDiv.textContent = "Looking into the stars...";
+            outputDiv.classList.remove('hidden');
+
+            const systemPrompt = "You are a mystical, loving fortune teller. Write a short 2-3 sentence happy and romantic birthday fortune for the user's partner, predicting wonderful dates, adventures, and love for the coming year.";
+            const userQuery = "Give us a beautiful couple's fortune for this upcoming birthday year.";
+
+            try {
+                const result = await fetchWithRetry(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: userQuery }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] }
+                        })
+                    }
+                );
+
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Your future is filled with infinite love and happiness!";
+                outputDiv.innerHTML = text;
+            } catch (error) {
+                outputDiv.innerHTML = "Our love is so bright it blinded the crystal ball! (Error generating fortune)";
+            }
+        }
+
+    </script>
+</body>
+</html>
